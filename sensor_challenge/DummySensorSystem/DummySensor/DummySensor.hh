@@ -20,7 +20,7 @@ namespace custom
 
         void concatenatePayload(const std::string& add_payload);
     private:
-        std::string _payload {"DummySensor"};
+        std::string _payload {"Hello World from DummySensor"};
 
         gz::transport::Node _node;
 

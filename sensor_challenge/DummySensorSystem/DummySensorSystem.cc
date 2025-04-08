@@ -39,7 +39,7 @@ void DummySensorSystem::PreUpdate(const gz::sim::UpdateInfo &,
 
                 if (data.Topic().empty());
                 {
-                    std::string topic = scopedName(_entity, _ecm) + "dummy";
+                    std::string topic = scopedName(_entity, _ecm) + "/dummy";
                     data.SetTopic(topic);
                 }
 

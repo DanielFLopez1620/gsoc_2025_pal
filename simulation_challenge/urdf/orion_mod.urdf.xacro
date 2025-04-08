@@ -25,6 +25,51 @@
     </xacro:if>
 
     <xacro:if value="${dummy_sensor}">
+        <link name="dummy_link">
+            <visual>
+                <geometry>
+                    <box size="0.025 0.025 0.025"/>
+                </geometry>
+                <material name="green">
+                    <color rgba="0 1 0 1"/> 
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.025 0.025 0.025"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.1"/>
+                <inertia ixx="1e-5" ixy="0.0" ixz="0.0"
+                        iyy="1e-5" iyz="0.0"
+                        izz="1e-5"/>
+            </inertial>
+        </link>
+
+        <!-- Fixed joint connecting to base_link -->
+        <joint name="dummy_link_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="dummy_link"/>
+            <origin xyz="-0.05 0 0.32" rpy="0 0 0"/> <!-- You can change the pose -->
+        </joint>
+
+        <gazebo>
+            <!-- System plugin to handle Dummy Sensors-->
+            <plugin
+                filename="DummySensorSystem"
+                name="custom::DummySensorSystem">
+            </plugin>
+        </gazebo>
+
+        <gazebo reference="dummy_link">
+            <!-- Dummy Sensor Definition -->
+            <sensor name="my_dummy" type="custom" gz:type="dummy" xmlns:gz="http://gazebosim.org/schema">
+                <always_on>1</always_on>
+                <update_rate>30</update_rate>
+                <visualize>true</visualize>
+            </sensor>
+        </gazebo>
     </xacro:if>
 
 </robot>

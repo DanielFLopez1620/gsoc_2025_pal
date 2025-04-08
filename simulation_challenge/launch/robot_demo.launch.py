@@ -115,6 +115,7 @@ def generate_launch_description():
     gz_file = os.path.join(pkg_gz, 'launch', 'gz_sim.launch.py')
     world_path = PathJoinSubstitution([challenge_pkg,'worlds', LaunchConfiguration('world')])
     bridge_path = os.path.join(challenge_pkg, 'config', 'ros_gz_bridge.yaml')
+    rviz_config_file = os.path.join(challenge_pkg, 'rviz', 'vis.rviz')
 
     # Addiitional configurations
     bridge_config = replace_entities(bridge_path)
@@ -176,6 +177,16 @@ def generate_launch_description():
                 }],
                 output='screen',
            ),
+    )
+
+    # Node for RVIZ2
+    ld.add_action(
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            arguments=['-d', rviz_config_file],
+            output='screen'
+        )
     )
 
     return ld
