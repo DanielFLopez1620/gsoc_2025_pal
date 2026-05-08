@@ -23,6 +23,61 @@
 
 using namespace custom;
 
+void DummySensorSystem::CreateSensor(gz::sim::Entity _entity,
+    const sdf::Sensor &_sdfData,
+    const gz::sim::Entity &_parent,
+    gz::sim::EntityComponentManager &_ecm)
+{
+    auto sensorScopedName = gz::sim::removeParentScope(
+        gz::sim::scopedName(_entity, _ecm, "::", false), "::");
+    sdf::Sensor data = _sdfData;
+    data.SetName(sensorScopedName);
+
+    if (data.Topic().empty())
+    {
+        std::string topic = scopedName(_entity, _ecm) + "/dummy";
+        data.SetTopic(topic);
+    }
+
+    gz::sensors::SensorFactory sensorFactory;
+    auto sensor = sensorFactory.CreateSensor<custom::DummySensor>(data);
+    if (nullptr == sensor)
+    {
+        gzerr << "Failed to create dummy [" << sensorScopedName << "]"
+              << std::endl;
+        return;
+    }
+
+    auto parentName = _ecm.Component<gz::sim::components::Name>(_parent)->Data();
+    sensor->SetParent(parentName);
+
+    _ecm.CreateComponent(_entity,
+        gz::sim::components::SensorTopic(sensor->Topic()));
+
+    this->entitySensorMap.insert(std::make_pair(_entity, std::move(sensor)));
+}
+
+void DummySensorSystem::Configure(const gz::sim::Entity &,
+    const std::shared_ptr<const sdf::Element> &,
+    gz::sim::EntityComponentManager &_ecm,
+    gz::sim::EventManager &)
+{
+    _ecm.Each<gz::sim::components::CustomSensor,
+              gz::sim::components::ParentEntity>(
+        [&](const gz::sim::Entity &_entity,
+            const gz::sim::components::CustomSensor *_custom,
+            const gz::sim::components::ParentEntity *_parent) -> bool
+        {
+            if (this->entitySensorMap.find(_entity) ==
+                this->entitySensorMap.end())
+            {
+                this->CreateSensor(_entity, _custom->Data(), _parent->Data(),
+                                   _ecm);
+            }
+            return true;
+        });
+}
+
 void DummySensorSystem::PreUpdate(const gz::sim::UpdateInfo &,
     gz::sim::EntityComponentManager &_ecm)
 {
@@ -30,40 +85,16 @@ void DummySensorSystem::PreUpdate(const gz::sim::UpdateInfo &,
                  gz::sim::components::ParentEntity>(
         [&](const gz::sim::Entity &_entity,
             const gz::sim::components::CustomSensor *_custom,
-            const gz::sim::components::ParentEntity *_parent)->bool
+            const gz::sim::components::ParentEntity *_parent) -> bool
+        {
+            if (this->entitySensorMap.find(_entity) ==
+                this->entitySensorMap.end())
             {
-                auto sensorScopedName = gz::sim::removeParentScope(
-                    gz::sim::scopedName(_entity,_ecm, "::", false), "::");
-                sdf::Sensor data = _custom->Data();
-                data.SetName(sensorScopedName);
-
-                if (data.Topic().empty());
-                {
-                    std::string topic = scopedName(_entity, _ecm) + "/dummy";
-                    data.SetTopic(topic);
-                }
-
-                gz::sensors::SensorFactory sensorFactory;
-                auto sensor = sensorFactory.CreateSensor<custom::DummySensor>(data);
-                if(nullptr == sensor)
-                {
-                    gzerr << "Failed to created dummy [" << sensorScopedName
-                          << "]" << std::endl;
-                    return false;
-                }
-
-                auto parentName = _ecm.Component<gz::sim::components::Name>(
-                    _parent->Data())->Data();
-                sensor->SetParent(parentName);
-
-                _ecm.CreateComponent(_entity,
-                    gz::sim::components::SensorTopic(sensor->Topic()));
-
-                this->entitySensorMap.insert(std::make_pair(_entity,
-                    std::move(sensor)));
-
-                return true;
-            });
+                this->CreateSensor(_entity, _custom->Data(), _parent->Data(),
+                                   _ecm);
+            }
+            return true;
+        });
 }
 
 void DummySensorSystem::PostUpdate(const gz::sim::UpdateInfo &_info,
@@ -97,6 +128,7 @@ void DummySensorSystem::RemoveSensorEntities(
 }
 
 GZ_ADD_PLUGIN(DummySensorSystem, gz::sim::System,
+    DummySensorSystem::ISystemConfigure,
     DummySensorSystem::ISystemPreUpdate,
     DummySensorSystem::ISystemPostUpdate
 )

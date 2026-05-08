@@ -6,6 +6,8 @@
     <xacro:property name="g_mov" default="false"/>
     <xacro:property name="rasp" default="rpi4"/>
     <xacro:property name="gazebo" default="true"/>
+    <xacro:property name="simplified" default="true"/>
+    <xacro:property name="motor" default="100"/>
     <xacro:property name="ros2_control" default="false"/>
     <xacro:property name="dummy_sensor" default="$(arg dummy_sensor)"/>
 
@@ -68,6 +70,7 @@
                 <always_on>1</always_on>
                 <update_rate>30</update_rate>
                 <visualize>true</visualize>
+                <gz:dummy>GSOC_2025</gz:dummy>
             </sensor>
         </gazebo>
     </xacro:if>

@@ -55,8 +55,11 @@ and source the packages as presented in the installation.
 3. Open a new terminal and subscribe to the topic on ROS 2 or GZ:
 
     ~~~bash
+    # Search for the dummy topic
     gz topic -l
+
+    # Make echo of the topic
+    gz topic -e -t <topic>
     ~~~
 
-
-**NOTE:** It wasn't possible to load the custom sensor in the URDF, it only loaded the System Plugin but ommitted the configuration.
+**NOTE:** When the system plugin is declared at model scope (inside a `<gazebo>` block in the URDF), it is loaded together with the model and its `<sensor>` elements. By that point the custom sensor components already exist, so an `EachNew` callback in `PreUpdate` never sees them. The plugin therefore implements `ISystemConfigure::Configure` and scans existing custom sensors with `Each` at load time, while keeping `EachNew` in `PreUpdate` for sensors added later. This is what allows the sensor to be loaded purely from the URDF without any world-level plugin configuration.
